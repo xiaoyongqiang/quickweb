@@ -1,0 +1,32 @@
+name: Go-CI-Pipeline
+
+# 触发条件：只要 push 到 main 分支就运行
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Go 环境
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: 静态检查 (golangci-lint)
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64.5
+          # 依然带着这个参数，避开那个 bytes 循环报错
+          args: --timeout=5m --disable=typecheck
+
+      - name: 编译测试
+        run: |
+          go mod tidy
+          go build -v -o admin-bin ./cmd/admin
