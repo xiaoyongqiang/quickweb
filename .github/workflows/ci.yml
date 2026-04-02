@@ -1,6 +1,5 @@
 name: Go-CI-Pipeline
 
-# 触发条件：只要 push 到 main 分支就运行
 on:
   push:
     branches: [ main ]
@@ -17,14 +16,18 @@ jobs:
       - name: 设置 Go 环境
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26'
+          go-version: '1.26.x' # 确保使用 1.26 系列
+          cache: true          # 🚀 开启 Go 依赖 (go.mod) 缓存
 
       - name: 静态检查 (golangci-lint)
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.64.5
-          # 依然带着这个参数，避开那个 bytes 循环报错
+          # 🚀 关键：如果预编译版不行，强制让 CI 现场编译一个适配 1.26 的版本
+          install-mode: goget 
           args: --timeout=5m --disable=typecheck
+          # 🚀 开启 Lint 结果缓存，下次跑会极快
+          skip-cache: false
 
       - name: 编译测试
         run: |
