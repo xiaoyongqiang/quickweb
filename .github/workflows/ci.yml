@@ -40,4 +40,4 @@ jobs:
       - name: 编译测试
         run: |
           go mod tidy
-          go build -v -o admin-bin ./cmd/admin
+          go build -v -o test-bin ./test
