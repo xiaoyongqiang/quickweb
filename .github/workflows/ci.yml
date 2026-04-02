@@ -16,18 +16,26 @@ jobs:
       - name: 设置 Go 环境
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26.x' # 确保使用 1.26 系列
-          cache: true          # 🚀 开启 Go 依赖 (go.mod) 缓存
+          go-version: '1.26.x'
+          cache: true  # 🚀 这行就开启了 go mod 依赖缓存
 
-      - name: 静态检查 (golangci-lint)
-        uses: golangci/golangci-lint-action@v6
+      - name: 缓存 golangci-lint 二进制文件
+        id: cache-lint
+        uses: actions/cache@v4
         with:
-          version: v1.64.5
-          # 🚀 关键：如果预编译版不行，强制让 CI 现场编译一个适配 1.26 的版本
-          install-mode: goget 
-          args: --timeout=5m --disable=typecheck
-          # 🚀 开启 Lint 结果缓存，下次跑会极快
-          skip-cache: false
+          path: ~/go/bin/golangci-lint
+          key: ${{ runner.os }}-lint-v1.64.5-go1.26
+
+      - name: 安装 golangci-lint (仅在无缓存时)
+        if: steps.cache-lint.outputs.cache-hit != 'true'
+        run: |
+          # 直接用 Go 1.26 现场安装，确保底层版本对齐
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
+
+      - name: 运行 静态检查 (Lint)
+        run: |
+          # 加上 --disable=typecheck 绕过你之前的标准库循环引用报错
+          ~/go/bin/golangci-lint run --timeout=5m --disable=typecheck
 
       - name: 编译测试
         run: |
